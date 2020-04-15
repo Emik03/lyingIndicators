@@ -583,7 +583,7 @@ public class LyingIndicators : MonoBehaviour
 
                     char[] c = buttonPressed[i].ToCharArray();
 
-                    byte x = System.Convert.ToByte(c[0] - 64), y;
+                    byte x = System.Convert.ToByte(c[0].ToString().ToUpper().ToCharArray()[0] - 64), y;
                     byte.TryParse(c[1].ToString(), out y);
                     y = (byte)(y - 1);
 
