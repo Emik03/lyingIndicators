@@ -415,7 +415,7 @@ public class LyingIndicators : MonoBehaviour
                 if (Info.IsPortPresent(Port.StereoRCA) ^ Info.IsPortPresent(Port.DVI))
                     lyingInd[str]++;
 
-                if (lyingInd[str] == 0 && Info.CountUniquePorts() > 3)
+                if (lyingInd[str] == 0 && Info.CountUniquePorts() >= 3)
                 {
                     if (lyingInd.ContainsKey("NSA"))
                         lyingInd["NSA"]++;
