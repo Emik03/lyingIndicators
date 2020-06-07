@@ -492,7 +492,7 @@ public class LyingIndicators : MonoBehaviour
                 if (lyingInd.Count == 2)
                     lyingInd[str]++;
 
-                if (lyingInd[str] == 0 && (Info.GetPortPlateCount() >= 3 || Info.IsPortPresent(Port.Parallel)) && lyingInd.ContainsKey("BOB"))
+                if (lyingInd[str] == 0 && (Info.GetPortPlateCount() >= 3 || Info.IsPortPresent(Port.Parallel)))
                     for (int k = 1; k < lyingInd.Count - 1; k++)
                     {
                         string temp;
