@@ -59,141 +59,52 @@ public class LyingIndicators : MonoBehaviour
 
     private void Start()
     {
-        Calculate();
-    }
+        string str;
+        _buttonStates = new bool[36];
+        Dictionary<string, byte> lyingInd = new Dictionary<string, byte>();
 
-    private IEnumerator Solve()
-    {
-        float s = 0;
-        _isSolved = true;
-        Module.HandlePass();
-        Audio.PlaySoundAtTransform("solve", Buttons[2].transform);
-        Audio.PlaySoundAtTransform("solve2", Buttons[2].transform);
-        Component.GetComponent<Renderer>().material.color = new Color32(160, 160, 160, 255);
-
-        while (s <= 1)
-        {
-            for (int i = 0; i < Buttons.Length; i++)
-            {
-                Buttons[i].transform.localPosition = Vector3.Lerp(Buttons[i].transform.localPosition, new Vector3(Buttons[i].transform.localPosition.x, 0.015f, Buttons[i].transform.localPosition.z), BackOut(s));
-                s += 0.001f;
-            }
-
-            yield return new WaitForSeconds(0.01f);
-        }
-
-        while (true)
-        {
-            for (int i = 0; i < 3; i++)
-            {
-                for (int j = 0; j < 6; j++)
-                {
-                    Buttons[i * 12 + j].GetComponent<Renderer>().material.color = new Color32(255, 255, 255, 255);
-                    yield return new WaitForSeconds(0.05f);
-                }
-
-                for (int j = 5; j >= 0; j--)
-                {
-                    Buttons[i * 12 + j + 6].GetComponent<Renderer>().material.color = new Color32(255, 255, 255, 255);
-                    yield return new WaitForSeconds(0.05f);
-                }
-            }
-
-            yield return new WaitForSeconds(0.5f);
-
-            for (int i = 0; i < 3; i++)
-            {
-                for (int j = 5; j >= 0; j--)
-                {
-                    if (Buttons[i * 12 + j].GetComponent<Renderer>().material.color.b == 1)
-                        Buttons[i * 12 + j].GetComponent<Renderer>().material.color = new Color32(153, 255, 255, 255);
-
-                    yield return new WaitForSeconds(0.05f);
-                }
-
-                for (int j = 0; j < 6; j++)
-                {
-                    if (Buttons[i * 12 + j + 6].GetComponent<Renderer>().material.color.b == 1)
-                        Buttons[i * 12 + j + 6].GetComponent<Renderer>().material.color = new Color32(153, 255, 255, 255);
-
-                    yield return new WaitForSeconds(0.05f);
-                }
-            }
-
-            yield return new WaitForSeconds(0.5f);
-        }
-    }
-
-    private IEnumerator HandlePress(byte btn)
-    {
-        if (_isSolved || _lightsOn || Buttons[btn].GetComponent<Renderer>().material.color.b == 0.6f)
-            yield break;
-
-        for (int i = 0; i < _buttonStates.Length; i++)
-        {
-            if (!_buttonStates[i])
-                break;
-
-            if (i == _buttonStates.Length - 1)
-            {
-                StartCoroutine(Solve());
-                yield break;
-            }
-        }
-
-        Debug.LogFormat("[Lying Indicators #{0}]: Pressing button {1}:{2}", _moduleId, (btn % 6) + 1, (btn / 6) + 1);
-
-        Audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.ButtonPress, Buttons[btn].transform);
-        Buttons[btn].AddInteractionPunch();
-
-        if (btn % 2 == 0)
-            Audio.PlaySoundAtTransform("press1", Buttons[2].transform);
-
-        else
-            Audio.PlaySoundAtTransform("press2", Buttons[2].transform);
-
-        if (_buttonStates[btn])
-        {
-            Debug.LogFormat("[Lying Indicators #{0}]: That button was invalid, strike!", _moduleId);
-            Buttons[btn].GetComponent<Renderer>().material.color = new Color32(255, 153, 153, 255);
-            Module.HandleStrike();
-            _hasStrike = true;
-
-            for (float i = 0; i < 1; i += 0.05f)
-            {
-                Buttons[btn].transform.localPosition = Vector3.Lerp(Buttons[btn].transform.localPosition, new Vector3(Buttons[btn].transform.localPosition.x, 0.005f, Buttons[btn].transform.localPosition.z), BackOut(i));
-                yield return new WaitForSeconds(0.01f);
-            }
-        }
+        if (Info.GetIndicators().Count() >= 2 && Info.GetIndicators().Count() <= 5)
+            foreach (string ind in Info.GetIndicators())
+                lyingInd.Add(ind, 0);
 
         else
         {
-            _buttonStates[btn] = true;
-            Buttons[btn].GetComponent<Renderer>().material.color = new Color32(153, 255, 153, 255);
+            foreach (char ser in Info.GetSerialNumber())
+                if (_serToInd.TryGetValue(ser, out str))
+                    if (!lyingInd.ContainsKey(str))
+                        lyingInd.Add(str, 0);
 
-            if (_buttonStates.Where(c => !c).Count() != 1)
-                Debug.LogFormat("[Lying Indicators #{0}]: That button was valid, there are {1} buttons left to press.", _moduleId, _buttonStates.Where(c => !c).Count());
+            if (Info.GetIndicators().Count() == 1)
+                foreach (string ind in Info.GetIndicators())
+                    if (!lyingInd.ContainsKey(ind))
+                        lyingInd.Add(ind, 0);
+        }
+
+
+        for (int i = 0; i < _serToInd.Count; i++)
+        {
+            if (i != _serToInd.Count - 1)
+                _serToInd.TryGetValue(System.Convert.ToChar(i + 48), out str);
 
             else
-                Debug.LogFormat("[Lying Indicators #{0}]: That button was valid, there are {1} button left to press.", _moduleId, _buttonStates.Where(c => !c).Count());
+                _serToInd.TryGetValue('A', out str);
 
-            for (int i = 0; i < _buttonStates.Length; i++)
+            for (int j = 0; j < lyingInd.Count(); j++)
             {
-                if (!_buttonStates[i])
-                {
-                    for (float j = 0; j < 1; j += 0.05f)
-                    {
-                        if (_isSolved)
-                            yield break;
+                if (!lyingInd.ContainsKey(str))
+                    break;
 
-                        Buttons[btn].transform.localPosition = Vector3.Lerp(Buttons[btn].transform.localPosition, new Vector3(Buttons[btn].transform.localPosition.x, 0.005f, Buttons[btn].transform.localPosition.z), BackOut(j));
-                        yield return new WaitForSeconds(0.01f);
-                    }
-                    yield break;
-                }
+                Lies(str, lyingInd);
             }
-            StartCoroutine(Solve());
         }
+
+        foreach (KeyValuePair<string, byte> ind in lyingInd)
+            AssignButtons(ind.Key, ind.Value > 0);
+
+        Debug.LogFormat("[Lying Indicators #{0}]: To solve this module, press all buttons that display 'F'.", _moduleId);
+
+        for (int i = 0; i < 6; i++)
+            Debug.LogFormat("[Lying Indicators #{0}]: {1} {2} {3} {4} {5} {6}", _moduleId, _buttonStates[6 * i].ToString().First(), _buttonStates[6 * i + 1].ToString().First(), _buttonStates[6 * i + 2].ToString().First(), _buttonStates[6 * i + 3].ToString().First(), _buttonStates[6 * i + 4].ToString().First(), _buttonStates[6 * i + 5].ToString().First());
     }
 
     private void AssignButtons(string index, bool isLying)
@@ -266,56 +177,6 @@ public class LyingIndicators : MonoBehaviour
                     break;
             }
         }
-    }
-
-    private void Calculate()
-    {
-        string str;
-        _buttonStates = new bool[36];
-        Dictionary<string, byte> lyingInd = new Dictionary<string, byte>();
-
-        if (Info.GetIndicators().Count() >= 2 && Info.GetIndicators().Count() <= 5)
-            foreach (string ind in Info.GetIndicators())
-                lyingInd.Add(ind, 0);
-
-        else
-        {
-            foreach (char ser in Info.GetSerialNumber())
-                if (_serToInd.TryGetValue(ser, out str))
-                    if (!lyingInd.ContainsKey(str))
-                        lyingInd.Add(str, 0);
-
-            if (Info.GetIndicators().Count() == 1)
-                foreach (string ind in Info.GetIndicators())
-                    if (!lyingInd.ContainsKey(ind))
-                        lyingInd.Add(ind, 0);
-        }
-
-
-        for (int i = 0; i < _serToInd.Count; i++)
-        {
-            if (i != _serToInd.Count - 1)
-                _serToInd.TryGetValue(System.Convert.ToChar(i + 48), out str);
-
-            else
-                _serToInd.TryGetValue('A', out str);
-
-            for (int j = 0; j < lyingInd.Count(); j++)
-            {
-                if (!lyingInd.ContainsKey(str))
-                    break;
-
-                Lies(str, lyingInd);
-            }
-        }
-
-        foreach (KeyValuePair<string, byte> ind in lyingInd)
-            AssignButtons(ind.Key, ind.Value > 0);
-
-        Debug.LogFormat("[Lying Indicators #{0}]: To solve this module, press all buttons that display 'F'.", _moduleId);
-
-        for (int i = 0; i < 6; i++)
-            Debug.LogFormat("[Lying Indicators #{0}]: {1} {2} {3} {4} {5} {6}", _moduleId, _buttonStates[6 * i].ToString().First(), _buttonStates[6 * i + 1].ToString().First(), _buttonStates[6 * i + 2].ToString().First(), _buttonStates[6 * i + 3].ToString().First(), _buttonStates[6 * i + 4].ToString().First(), _buttonStates[6 * i + 5].ToString().First());
     }
 
     private void Lies(string str, Dictionary<string, byte> lyingInd)
@@ -483,7 +344,7 @@ public class LyingIndicators : MonoBehaviour
                 if (Info.IsDuplicatePortPresent())
                     lyingInd[str]++;
 
-                if (Info.GetModuleNames().Count() != Info.GetModuleNames().Distinct().Count())
+                if (lyingInd[str] == 0 && Info.GetModuleNames().Count() != Info.GetModuleNames().Distinct().Count())
                     if (lyingInd.ContainsKey("TRN"))
                         lyingInd["TRN"]++;
                 break;
@@ -506,6 +367,140 @@ public class LyingIndicators : MonoBehaviour
                                 lyingInd[indArray[i]] = 0;
                     }
                 break;
+        }
+    }
+
+    private IEnumerator Solve()
+    {
+        float s = 0;
+        _isSolved = true;
+        Module.HandlePass();
+        Audio.PlaySoundAtTransform("solve", Buttons[2].transform);
+        Audio.PlaySoundAtTransform("solve2", Buttons[2].transform);
+        Component.GetComponent<Renderer>().material.color = new Color32(160, 160, 160, 255);
+
+        while (s <= 1)
+        {
+            for (int i = 0; i < Buttons.Length; i++)
+            {
+                Buttons[i].transform.localPosition = Vector3.Lerp(Buttons[i].transform.localPosition, new Vector3(Buttons[i].transform.localPosition.x, 0.015f, Buttons[i].transform.localPosition.z), BackOut(s));
+                s += 0.001f;
+            }
+
+            yield return new WaitForSeconds(0.01f);
+        }
+
+        while (true)
+        {
+            for (int i = 0; i < 3; i++)
+            {
+                for (int j = 0; j < 6; j++)
+                {
+                    Buttons[i * 12 + j].GetComponent<Renderer>().material.color = new Color32(255, 255, 255, 255);
+                    yield return new WaitForSeconds(0.05f);
+                }
+
+                for (int j = 5; j >= 0; j--)
+                {
+                    Buttons[i * 12 + j + 6].GetComponent<Renderer>().material.color = new Color32(255, 255, 255, 255);
+                    yield return new WaitForSeconds(0.05f);
+                }
+            }
+
+            yield return new WaitForSeconds(0.5f);
+
+            for (int i = 0; i < 3; i++)
+            {
+                for (int j = 5; j >= 0; j--)
+                {
+                    if (Buttons[i * 12 + j].GetComponent<Renderer>().material.color.b == 1)
+                        Buttons[i * 12 + j].GetComponent<Renderer>().material.color = new Color32(153, 255, 255, 255);
+
+                    yield return new WaitForSeconds(0.05f);
+                }
+
+                for (int j = 0; j < 6; j++)
+                {
+                    if (Buttons[i * 12 + j + 6].GetComponent<Renderer>().material.color.b == 1)
+                        Buttons[i * 12 + j + 6].GetComponent<Renderer>().material.color = new Color32(153, 255, 255, 255);
+
+                    yield return new WaitForSeconds(0.05f);
+                }
+            }
+
+            yield return new WaitForSeconds(0.5f);
+        }
+    }
+
+    private IEnumerator HandlePress(byte btn)
+    {
+        if (_isSolved || _lightsOn || Buttons[btn].GetComponent<Renderer>().material.color.b == 0.6f)
+            yield break;
+
+        for (int i = 0; i < _buttonStates.Length; i++)
+        {
+            if (!_buttonStates[i])
+                break;
+
+            if (i == _buttonStates.Length - 1)
+            {
+                StartCoroutine(Solve());
+                yield break;
+            }
+        }
+
+        Debug.LogFormat("[Lying Indicators #{0}]: Pressing button {1}:{2}", _moduleId, (btn % 6) + 1, (btn / 6) + 1);
+
+        Audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.ButtonPress, Buttons[btn].transform);
+        Buttons[btn].AddInteractionPunch();
+
+        if (btn % 2 == 0)
+            Audio.PlaySoundAtTransform("press1", Buttons[2].transform);
+
+        else
+            Audio.PlaySoundAtTransform("press2", Buttons[2].transform);
+
+        if (_buttonStates[btn])
+        {
+            Debug.LogFormat("[Lying Indicators #{0}]: That button was invalid, strike!", _moduleId);
+            Buttons[btn].GetComponent<Renderer>().material.color = new Color32(255, 153, 153, 255);
+            Module.HandleStrike();
+            _hasStrike = true;
+
+            for (float i = 0; i < 1; i += 0.05f)
+            {
+                Buttons[btn].transform.localPosition = Vector3.Lerp(Buttons[btn].transform.localPosition, new Vector3(Buttons[btn].transform.localPosition.x, 0.005f, Buttons[btn].transform.localPosition.z), BackOut(i));
+                yield return new WaitForSeconds(0.01f);
+            }
+        }
+
+        else
+        {
+            _buttonStates[btn] = true;
+            Buttons[btn].GetComponent<Renderer>().material.color = new Color32(153, 255, 153, 255);
+
+            if (_buttonStates.Where(c => !c).Count() != 1)
+                Debug.LogFormat("[Lying Indicators #{0}]: That button was valid, there are {1} buttons left to press.", _moduleId, _buttonStates.Where(c => !c).Count());
+
+            else
+                Debug.LogFormat("[Lying Indicators #{0}]: That button was valid, there are {1} button left to press.", _moduleId, _buttonStates.Where(c => !c).Count());
+
+            for (int i = 0; i < _buttonStates.Length; i++)
+            {
+                if (!_buttonStates[i])
+                {
+                    for (float j = 0; j < 1; j += 0.05f)
+                    {
+                        if (_isSolved)
+                            yield break;
+
+                        Buttons[btn].transform.localPosition = Vector3.Lerp(Buttons[btn].transform.localPosition, new Vector3(Buttons[btn].transform.localPosition.x, 0.005f, Buttons[btn].transform.localPosition.z), BackOut(j));
+                        yield return new WaitForSeconds(0.01f);
+                    }
+                    yield break;
+                }
+            }
+            StartCoroutine(Solve());
         }
     }
 

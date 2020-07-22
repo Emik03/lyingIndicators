@@ -27,11 +27,10 @@ public class ExampleModule2 : MonoBehaviour
 
     void Start()
     {
-        
+        Debug.Log(_moduleId);
     }
 
     void HandlePress(byte btn)
     {
-
     }
 }
