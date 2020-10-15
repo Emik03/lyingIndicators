@@ -542,12 +542,13 @@ public class LyingIndicators : MonoBehaviour
     IEnumerator ProcessTwitchCommand(string command)
     {
         string[] buttonPressed = command.Split(' ');
+        bool push = true;
+        _hasStrike = false;
 
         //if command is formatted correctly
         if (Regex.IsMatch(buttonPressed[0], @"^\s*press\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
         {
             yield return null;
-            bool push = true;
 
             for (int i = 1; i < buttonPressed.Length; i++)
             {
@@ -568,22 +569,14 @@ public class LyingIndicators : MonoBehaviour
 
             //if command is valid, push button accordingly
             if (push)
-                for (int i = 1; i < buttonPressed.Length; i++)
+                for (int i = 1; i < buttonPressed.Length && !_hasStrike; i++)
                 {
-                    if (_hasStrike)
-                    {
-                        _hasStrike = false;
-                        break;
-                    }
-
                     char[] c = buttonPressed[i].ToCharArray();
 
                     byte x = System.Convert.ToByte(c[0].ToString().ToUpper().ToCharArray()[0] - 64), y;
                     byte.TryParse(c[1].ToString(), out y);
                     y = (byte)(y - 1);
-
-                    Debug.Log(x);
-                    Debug.Log(y);
+                    
                     Buttons[(6 * y) + (x - 1)].OnInteract();
                     yield return new WaitForSeconds(0.35f);
                 }
