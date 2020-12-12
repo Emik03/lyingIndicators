@@ -17,7 +17,7 @@ public class LyingIndicators : MonoBehaviour
     private bool[] _buttonStates;
     static int _moduleIdCounter = 1;
     int _moduleId;
-    private readonly static string[] _emikModules = { "Placeholder Talk", "Role Reversal", "Sorting", "Forget The Colors", "Etterna", "Lose/Lose", "Win/Win", "e621.net", "Palindromes", "hexOS", "Reformed Role Reversal", "Forget Any Color", "Quaver" };
+    private readonly static string[] _emikModules = { "Placeholder Talk", "Role Reversal", "Sorting", "Forget The Colors", "Etterna", "Lose/Lose", "Win/Win", "e621.net", "Palindromes", "hexOS", "Reformed Role Reversal", "Forget Any Color", "Quaver", "Diophantine Equations", "Phosphorescence" };
     private readonly static Dictionary<char, string> _serToInd = new Dictionary<char, string>(11) { { '0', "BOB" }, { '1', "CAR" }, { '2', "CLR" }, { '3', "FRK" }, { '4', "FRQ" }, { '5', "IND" }, { '6', "MSA" }, { '7', "NSA" }, { '8', "SIG" }, { '9', "SND" }, { 'A', "TRN" } };
     
     private void Awake()
